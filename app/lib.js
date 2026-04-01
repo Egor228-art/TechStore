@@ -13,7 +13,7 @@ if (!connectionString) {
 
 // Создаем клиент с явной строкой подключения
 function getSql() {
-  if (connectionString && connectionString !== process.env.POSTGRES_URL) {
+  if (connectionString && connectionString !== process.env.POSTGRES_URL_TECH) {
     const { sql: customSql } = require('@vercel/postgres');
     return customSql(connectionString);
   }
