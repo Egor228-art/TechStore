@@ -102,16 +102,10 @@ async function seedProducts() {
   }
 }
 
-// Получаем правильный клиент для запросов
-function getDb() {
-  return getSql();
-}
-
-// Пользователи
+// ============ ПОЛЬЗОВАТЕЛИ ============
 export async function getUserByEmail(email) {
   try {
-    const db = getDb();
-    const rows = await db`SELECT * FROM users WHERE email = ${email}`;
+    const { rows } = await sql`SELECT * FROM users WHERE email = ${email}`;
     return rows[0];
   } catch (error) {
     console.error('Ошибка поиска:', error.message);
@@ -122,8 +116,7 @@ export async function getUserByEmail(email) {
 export async function createUser(email, password, name, phone = '') {
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
-    const db = getDb();
-    const rows = await db`
+    const { rows } = await sql`
       INSERT INTO users (email, password, name, phone)
       VALUES (${email}, ${hashedPassword}, ${name}, ${phone})
       RETURNING id, email, name
@@ -135,17 +128,16 @@ export async function createUser(email, password, name, phone = '') {
   }
 }
 
-// Товары
+// ============ ТОВАРЫ ============
 export async function getAllProducts(category = null) {
   try {
-    const db = getDb();
     if (category && category !== 'all') {
-      const rows = await db`
+      const { rows } = await sql`
         SELECT * FROM products WHERE category = ${category} ORDER BY created_at DESC
       `;
       return rows;
     }
-    const rows = await db`SELECT * FROM products ORDER BY created_at DESC`;
+    const { rows } = await sql`SELECT * FROM products ORDER BY created_at DESC`;
     return rows;
   } catch (error) {
     console.error('Ошибка получения товаров:', error.message);
@@ -155,8 +147,7 @@ export async function getAllProducts(category = null) {
 
 export async function getProductById(id) {
   try {
-    const db = getDb();
-    const rows = await db`SELECT * FROM products WHERE id = ${id}`;
+    const { rows } = await sql`SELECT * FROM products WHERE id = ${id}`;
     return rows[0];
   } catch (error) {
     console.error('Ошибка получения товара:', error.message);
@@ -164,11 +155,10 @@ export async function getProductById(id) {
   }
 }
 
-// Корзина
+// ============ КОРЗИНА ============
 export async function getCart(userId) {
   try {
-    const db = getDb();
-    const rows = await db`
+    const { rows } = await sql`
       SELECT ci.*, p.name, p.price, p.image, p.stock
       FROM cart_items ci
       JOIN products p ON ci.product_id = p.id
@@ -183,18 +173,17 @@ export async function getCart(userId) {
 
 export async function addToCart(userId, productId, quantity = 1) {
   try {
-    const db = getDb();
-    const existing = await db`
+    const existing = await sql`
       SELECT * FROM cart_items WHERE user_id = ${userId} AND product_id = ${productId}
     `;
     
-    if (existing.length > 0) {
-      await db`
+    if (existing.rows.length > 0) {
+      await sql`
         UPDATE cart_items SET quantity = quantity + ${quantity}
         WHERE user_id = ${userId} AND product_id = ${productId}
       `;
     } else {
-      await db`
+      await sql`
         INSERT INTO cart_items (user_id, product_id, quantity)
         VALUES (${userId}, ${productId}, ${quantity})
       `;
@@ -208,13 +197,12 @@ export async function addToCart(userId, productId, quantity = 1) {
 
 export async function updateCartItem(userId, productId, quantity) {
   try {
-    const db = getDb();
     if (quantity <= 0) {
-      await db`
+      await sql`
         DELETE FROM cart_items WHERE user_id = ${userId} AND product_id = ${productId}
       `;
     } else {
-      await db`
+      await sql`
         UPDATE cart_items SET quantity = ${quantity}
         WHERE user_id = ${userId} AND product_id = ${productId}
       `;
@@ -228,8 +216,7 @@ export async function updateCartItem(userId, productId, quantity) {
 
 export async function clearCart(userId) {
   try {
-    const db = getDb();
-    await db`DELETE FROM cart_items WHERE user_id = ${userId}`;
+    await sql`DELETE FROM cart_items WHERE user_id = ${userId}`;
     return { success: true };
   } catch (error) {
     console.error('Ошибка очистки корзины:', error.message);
@@ -237,16 +224,15 @@ export async function clearCart(userId) {
   }
 }
 
-// Заказы
+// ============ ЗАКАЗЫ ============
 export async function createOrder(userId, address, phone) {
   try {
-    const db = getDb();
     const cart = await getCart(userId);
     if (cart.length === 0) throw new Error('Корзина пуста');
     
     const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
     
-    const rows = await db`
+    const { rows } = await sql`
       INSERT INTO orders (user_id, total, address, phone)
       VALUES (${userId}, ${total}, ${address}, ${phone})
       RETURNING id
@@ -255,12 +241,12 @@ export async function createOrder(userId, address, phone) {
     const orderId = rows[0].id;
     
     for (const item of cart) {
-      await db`
+      await sql`
         INSERT INTO order_items (order_id, product_id, product_name, price, quantity)
         VALUES (${orderId}, ${item.product_id}, ${item.name}, ${item.price}, ${item.quantity})
       `;
       
-      await db`
+      await sql`
         UPDATE products SET stock = stock - ${item.quantity}
         WHERE id = ${item.product_id}
       `;
@@ -277,8 +263,7 @@ export async function createOrder(userId, address, phone) {
 
 export async function getUserOrders(userId) {
   try {
-    const db = getDb();
-    const rows = await db`
+    const { rows } = await sql`
       SELECT * FROM orders WHERE user_id = ${userId} ORDER BY created_at DESC
     `;
     return rows;
