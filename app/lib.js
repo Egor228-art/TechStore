@@ -1,10 +1,7 @@
 import { sql } from '@vercel/postgres';
 import bcrypt from 'bcryptjs';
 
-// Флаг для предотвращения повторной инициализации
-let tablesInitialized = false;
-
-// Получаем строку подключения из переменных
+// Используем правильную переменную окружения
 const connectionString = process.env.POSTGRES_URL_TECH || process.env.POSTGRES_URL;
 
 if (!connectionString) {
@@ -14,11 +11,16 @@ if (!connectionString) {
 // Создаем клиент с явной строкой подключения
 function getSql() {
   if (connectionString && connectionString !== process.env.POSTGRES_URL_TECH) {
-    const { sql: customSql } = require('@vercel/postgres');
-    return customSql(connectionString);
+    // Если у нас есть кастомная строка, создаем клиент с ней
+    const { neon } = require('@neondatabase/serverless');
+    const sql = neon(connectionString);
+    return sql;
   }
   return sql;
 }
+
+// Флаг для предотвращения повторной инициализации
+let tablesInitialized = false;
 
 // Инициализация таблиц
 export async function initTables() {
@@ -88,7 +90,7 @@ export async function initTables() {
     
     // Добавляем тестовые товары, если таблица пустая
     const products = await db`SELECT * FROM products`;
-    if (products.rows.length === 0) {
+    if (products.length === 0) {
       await seedProducts(db);
     }
     
@@ -128,7 +130,7 @@ function getDb() {
 export async function getUserByEmail(email) {
   try {
     const db = getDb();
-    const { rows } = await db`SELECT * FROM users WHERE email = ${email}`;
+    const rows = await db`SELECT * FROM users WHERE email = ${email}`;
     return rows[0];
   } catch (error) {
     console.error('Ошибка поиска:', error.message);
@@ -140,7 +142,7 @@ export async function createUser(email, password, name, phone = '') {
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
     const db = getDb();
-    const { rows } = await db`
+    const rows = await db`
       INSERT INTO users (email, password, name, phone)
       VALUES (${email}, ${hashedPassword}, ${name}, ${phone})
       RETURNING id, email, name
@@ -157,12 +159,12 @@ export async function getAllProducts(category = null) {
   try {
     const db = getDb();
     if (category && category !== 'all') {
-      const { rows } = await db`
+      const rows = await db`
         SELECT * FROM products WHERE category = ${category} ORDER BY created_at DESC
       `;
       return rows;
     }
-    const { rows } = await db`SELECT * FROM products ORDER BY created_at DESC`;
+    const rows = await db`SELECT * FROM products ORDER BY created_at DESC`;
     return rows;
   } catch (error) {
     console.error('Ошибка получения товаров:', error.message);
@@ -173,7 +175,7 @@ export async function getAllProducts(category = null) {
 export async function getProductById(id) {
   try {
     const db = getDb();
-    const { rows } = await db`SELECT * FROM products WHERE id = ${id}`;
+    const rows = await db`SELECT * FROM products WHERE id = ${id}`;
     return rows[0];
   } catch (error) {
     console.error('Ошибка получения товара:', error.message);
@@ -185,7 +187,7 @@ export async function getProductById(id) {
 export async function getCart(userId) {
   try {
     const db = getDb();
-    const { rows } = await db`
+    const rows = await db`
       SELECT ci.*, p.name, p.price, p.image, p.stock
       FROM cart_items ci
       JOIN products p ON ci.product_id = p.id
@@ -205,7 +207,7 @@ export async function addToCart(userId, productId, quantity = 1) {
       SELECT * FROM cart_items WHERE user_id = ${userId} AND product_id = ${productId}
     `;
     
-    if (existing.rows.length > 0) {
+    if (existing.length > 0) {
       await db`
         UPDATE cart_items SET quantity = quantity + ${quantity}
         WHERE user_id = ${userId} AND product_id = ${productId}
@@ -263,7 +265,7 @@ export async function createOrder(userId, address, phone) {
     
     const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
     
-    const { rows } = await db`
+    const rows = await db`
       INSERT INTO orders (user_id, total, address, phone)
       VALUES (${userId}, ${total}, ${address}, ${phone})
       RETURNING id
@@ -295,7 +297,7 @@ export async function createOrder(userId, address, phone) {
 export async function getUserOrders(userId) {
   try {
     const db = getDb();
-    const { rows } = await db`
+    const rows = await db`
       SELECT * FROM orders WHERE user_id = ${userId} ORDER BY created_at DESC
     `;
     return rows;
