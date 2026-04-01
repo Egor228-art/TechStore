@@ -1,8 +1,13 @@
 import { sql } from '@vercel/postgres';
 import bcrypt from 'bcryptjs';
 
+// Флаг для предотвращения повторной инициализации
+let tablesInitialized = false;
+
 // Инициализация таблиц
 export async function initTables() {
+  if (tablesInitialized) return;
+  
   try {
     await sql`
       CREATE TABLE IF NOT EXISTS users (
@@ -69,6 +74,7 @@ export async function initTables() {
       await seedProducts();
     }
     
+    tablesInitialized = true;
     console.log('✅ Все таблицы магазина созданы/проверены');
   } catch (error) {
     console.error('❌ Ошибка при создании таблиц:', error.message);
@@ -77,12 +83,12 @@ export async function initTables() {
 
 async function seedProducts() {
   const testProducts = [
-    { name: 'iPhone 15 Pro', description: 'Флагманский смартфон Apple', price: 99990, category: 'phones', image: '📱', stock: 10, rating: 4.8 },
-    { name: 'Samsung Galaxy S24', description: 'Мощный Android смартфон', price: 89990, category: 'phones', image: '📱', stock: 15, rating: 4.7 },
-    { name: 'MacBook Pro 14"', description: 'Ноутбук для профессионалов', price: 199990, category: 'laptops', image: '💻', stock: 5, rating: 4.9 },
-    { name: 'Sony WH-1000XM5', description: 'Беспроводные наушники', price: 29990, category: 'audio', image: '🎧', stock: 20, rating: 4.8 },
-    { name: 'iPad Air', description: 'Планшет для творчества', price: 59990, category: 'tablets', image: '📟', stock: 8, rating: 4.6 },
-    { name: 'Apple Watch Series 9', description: 'Умные часы', price: 39990, category: 'wearables', image: '⌚', stock: 12, rating: 4.7 },
+    { name: 'iPhone 15 Pro', description: 'Флагманский смартфон Apple с Titanium корпусом', price: 99990, category: 'phones', image: '📱', stock: 10, rating: 4.8 },
+    { name: 'Samsung Galaxy S24', description: 'Мощный Android смартфон с AI функциями', price: 89990, category: 'phones', image: '📱', stock: 15, rating: 4.7 },
+    { name: 'MacBook Pro 14"', description: 'Ноутбук для профессионалов с M3 чипом', price: 199990, category: 'laptops', image: '💻', stock: 5, rating: 4.9 },
+    { name: 'Sony WH-1000XM5', description: 'Беспроводные наушники с шумоподавлением', price: 29990, category: 'audio', image: '🎧', stock: 20, rating: 4.8 },
+    { name: 'iPad Air', description: 'Планшет для творчества и учебы', price: 59990, category: 'tablets', image: '📟', stock: 8, rating: 4.6 },
+    { name: 'Apple Watch Series 9', description: 'Умные часы с новыми функциями', price: 39990, category: 'wearables', image: '⌚', stock: 12, rating: 4.7 },
   ];
   
   for (const product of testProducts) {
@@ -93,7 +99,8 @@ async function seedProducts() {
   }
 }
 
-initTables();
+// Не вызываем initTables() автоматически, только по запросу
+// initTables();
 
 // Пользователи
 export async function getUserByEmail(email) {
