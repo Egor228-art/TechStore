@@ -1,6 +1,6 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { getUserByEmail } from "../../../lib";
+import { getUserByEmail, initTables } from "../../../lib";
 import bcrypt from "bcryptjs";
 
 export const authOptions = {
@@ -13,6 +13,9 @@ export const authOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
+        
+        // Создаем таблицы, если нужно
+        await initTables();
         
         const user = await getUserByEmail(credentials.email);
         if (!user) return null;

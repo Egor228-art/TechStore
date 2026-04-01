@@ -8,11 +8,14 @@ export async function GET() {
     await initTables();
     
     const session = await getServerSession(authOptions);
-    if (!session) return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
+    if (!session) {
+      return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
+    }
     
     const cart = await getCart(session.user.id);
     return NextResponse.json({ success: true, cart });
   } catch (error) {
+    console.error('Ошибка получения корзины:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
@@ -22,12 +25,15 @@ export async function POST(request) {
     await initTables();
     
     const session = await getServerSession(authOptions);
-    if (!session) return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
+    if (!session) {
+      return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
+    }
     
     const { productId, quantity } = await request.json();
     await addToCart(session.user.id, productId, quantity || 1);
     return NextResponse.json({ success: true });
   } catch (error) {
+    console.error('Ошибка добавления в корзину:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
@@ -37,12 +43,15 @@ export async function PUT(request) {
     await initTables();
     
     const session = await getServerSession(authOptions);
-    if (!session) return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
+    if (!session) {
+      return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
+    }
     
     const { productId, quantity } = await request.json();
     await updateCartItem(session.user.id, productId, quantity);
     return NextResponse.json({ success: true });
   } catch (error) {
+    console.error('Ошибка обновления корзины:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
@@ -52,11 +61,14 @@ export async function DELETE(request) {
     await initTables();
     
     const session = await getServerSession(authOptions);
-    if (!session) return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
+    if (!session) {
+      return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
+    }
     
     await clearCart(session.user.id);
     return NextResponse.json({ success: true });
   } catch (error) {
+    console.error('Ошибка очистки корзины:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

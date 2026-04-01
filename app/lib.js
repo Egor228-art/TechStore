@@ -1,35 +1,15 @@
 import { sql } from '@vercel/postgres';
 import bcrypt from 'bcryptjs';
 
-// Используем правильную переменную окружения
-const connectionString = process.env.POSTGRES_URL_TECH || process.env.POSTGRES_URL;
-
-if (!connectionString) {
-  console.error('❌ Нет строки подключения к базе данных');
-}
-
-// Создаем клиент с явной строкой подключения
-function getSql() {
-  if (connectionString && connectionString !== process.env.POSTGRES_URL_TECH) {
-    // Если у нас есть кастомная строка, создаем клиент с ней
-    const { neon } = require('@neondatabase/serverless');
-    const sql = neon(connectionString);
-    return sql;
-  }
-  return sql;
-}
-
-// Флаг для предотвращения повторной инициализации
 let tablesInitialized = false;
 
-// Инициализация таблиц
 export async function initTables() {
   if (tablesInitialized) return;
   
   try {
-    const db = getSql();
+    console.log('🔄 Создание таблиц...');
     
-    await db`
+    await sql`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
         email VARCHAR(255) UNIQUE NOT NULL,
@@ -41,7 +21,7 @@ export async function initTables() {
       )
     `;
     
-    await db`
+    await sql`
       CREATE TABLE IF NOT EXISTS products (
         id SERIAL PRIMARY KEY,
         name VARCHAR(200) NOT NULL,
@@ -55,7 +35,7 @@ export async function initTables() {
       )
     `;
     
-    await db`
+    await sql`
       CREATE TABLE IF NOT EXISTS cart_items (
         id SERIAL PRIMARY KEY,
         user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
@@ -65,7 +45,7 @@ export async function initTables() {
       )
     `;
     
-    await db`
+    await sql`
       CREATE TABLE IF NOT EXISTS orders (
         id SERIAL PRIMARY KEY,
         user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
@@ -77,7 +57,7 @@ export async function initTables() {
       )
     `;
     
-    await db`
+    await sql`
       CREATE TABLE IF NOT EXISTS order_items (
         id SERIAL PRIMARY KEY,
         order_id INTEGER REFERENCES orders(id) ON DELETE CASCADE,
@@ -89,9 +69,10 @@ export async function initTables() {
     `;
     
     // Добавляем тестовые товары, если таблица пустая
-    const products = await db`SELECT * FROM products`;
-    if (products.length === 0) {
-      await seedProducts(db);
+    const products = await sql`SELECT * FROM products`;
+    if (products.rows.length === 0) {
+      console.log('🔄 Добавление тестовых товаров...');
+      await seedProducts();
     }
     
     tablesInitialized = true;
@@ -101,7 +82,7 @@ export async function initTables() {
   }
 }
 
-async function seedProducts(db) {
+async function seedProducts() {
   const testProducts = [
     { name: 'iPhone 15 Pro', description: 'Флагманский смартфон Apple с Titanium корпусом', price: 99990, category: 'phones', image: '📱', stock: 10, rating: 4.8 },
     { name: 'Samsung Galaxy S24', description: 'Мощный Android смартфон с AI функциями', price: 89990, category: 'phones', image: '📱', stock: 15, rating: 4.7 },
@@ -114,7 +95,7 @@ async function seedProducts(db) {
   ];
   
   for (const product of testProducts) {
-    await db`
+    await sql`
       INSERT INTO products (name, description, price, category, image, stock, rating)
       VALUES (${product.name}, ${product.description}, ${product.price}, ${product.category}, ${product.image}, ${product.stock}, ${product.rating})
     `;

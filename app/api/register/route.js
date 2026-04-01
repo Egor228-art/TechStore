@@ -1,11 +1,12 @@
-import { createUser, getUserByEmail } from "../../lib";
+import { createUser, getUserByEmail, initTables } from "../../lib";
 import { NextResponse } from "next/server";
 
 export async function POST(request) {
   try {
-    const { email, password, name } = await request.json();
+    // Создаем таблицы при первом запросе
+    await initTables();
     
-    console.log('Регистрация:', { email, name });
+    const { email, password, name, phone } = await request.json();
     
     if (!email || !password) {
       return NextResponse.json(
@@ -14,7 +15,6 @@ export async function POST(request) {
       );
     }
     
-    // Проверка существующего пользователя
     const existingUser = await getUserByEmail(email);
     if (existingUser) {
       return NextResponse.json(
@@ -23,15 +23,14 @@ export async function POST(request) {
       );
     }
     
-    // Создание пользователя
-    const newUser = await createUser(email, password, name);
+    const newUser = await createUser(email, password, name, phone);
     
     return NextResponse.json(
       { success: true, user: newUser },
       { status: 201 }
     );
   } catch (error) {
-    console.error('Ошибка:', error);
+    console.error('Ошибка регистрации:', error);
     return NextResponse.json(
       { error: "Ошибка сервера: " + error.message },
       { status: 500 }
