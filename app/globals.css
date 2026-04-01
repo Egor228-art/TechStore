@@ -629,6 +629,395 @@ input:focus, select:focus, textarea:focus {
   margin-bottom: 0.5rem;
 }
 
+/* ============ DASHBOARD СТИЛИ ============ */
+
+/* Шапка дашборда */
+.dashboard-header {
+  background: white;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  border: 1px solid #e5e7eb;
+}
+
+.dashboard-header h2 {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+  color: var(--dark);
+}
+
+.user-email {
+  background: var(--light);
+  padding: 0.5rem 1rem;
+  border-radius: 2rem;
+  font-size: 0.875rem;
+  color: var(--primary);
+  font-weight: 500;
+  word-break: break-all;
+  display: inline-block;
+  max-width: 100%;
+}
+
+.dashboard-header button {
+  background: var(--danger);
+  padding: 0.5rem 1.5rem;
+  white-space: nowrap;
+}
+
+/* Карточки статистики */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.stat-card {
+  background: white;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  border: 1px solid #e5e7eb;
+  transition: transform 0.2s;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+}
+
+.stat-card h3 {
+  font-size: 1rem;
+  color: var(--gray);
+  margin-bottom: 0.5rem;
+}
+
+.stat-number {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: var(--primary);
+  margin: 0.5rem 0;
+}
+
+.stat-card .btn {
+  margin-top: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+}
+
+/* Табы */
+.dashboard-tabs {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  border-bottom: 2px solid #e5e7eb;
+  padding-bottom: 0.5rem;
+}
+
+.tab-dashboard {
+  background: transparent;
+  color: var(--gray);
+  padding: 0.75rem 1.5rem;
+  border-radius: 2rem;
+  font-weight: 500;
+  transition: all 0.3s;
+  box-shadow: none;
+}
+
+.tab-dashboard:hover {
+  background: var(--light);
+  color: var(--primary);
+  transform: none;
+}
+
+.tab-dashboard.active {
+  background: var(--primary);
+  color: white;
+}
+
+/* Список полисов/товаров */
+.items-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.item-card {
+  background: white;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  border: 1px solid #e5e7eb;
+  transition: all 0.3s;
+}
+
+.item-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.item-card h3 {
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+  color: var(--dark);
+}
+
+.item-card p {
+  color: var(--gray);
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+}
+
+.item-price {
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: var(--primary);
+  margin: 0.5rem 0;
+}
+
+.item-status {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 2rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.status-active, .status-completed {
+  background: #d1fae5;
+  color: #059669;
+}
+
+.status-pending, .status-new {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.status-expired {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.item-actions {
+  margin-top: 1rem;
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.item-actions button {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  background: var(--light);
+  color: var(--dark);
+  box-shadow: none;
+}
+
+.item-actions button:hover {
+  background: var(--primary);
+  color: white;
+}
+
+/* Форма создания заказа/полиса */
+.order-form, .policy-form {
+  background: white;
+  border-radius: 1rem;
+  padding: 2rem;
+  max-width: 500px;
+  margin: 0 auto;
+  border: 1px solid #e5e7eb;
+}
+
+.order-form h3, .policy-form h3 {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  color: var(--primary);
+}
+
+.order-form input,
+.order-form select,
+.policy-form input,
+.policy-form select {
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.order-form button,
+.policy-form button {
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+/* Список транзакций/обращений */
+.transactions-list {
+  background: white;
+  border-radius: 1rem;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+}
+
+.transaction-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.transaction-item:last-child {
+  border-bottom: none;
+}
+
+.transaction-info {
+  flex: 2;
+  min-width: 150px;
+}
+
+.transaction-title {
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.transaction-date {
+  font-size: 0.75rem;
+  color: var(--gray);
+}
+
+.transaction-amount {
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+.transaction-amount.positive {
+  color: var(--success);
+}
+
+.transaction-amount.negative {
+  color: var(--danger);
+}
+
+/* Пустые состояния */
+.empty-state {
+  text-align: center;
+  padding: 3rem;
+  background: white;
+  border-radius: 1rem;
+  border: 1px solid #e5e7eb;
+}
+
+.empty-state-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.empty-state h3 {
+  margin-bottom: 0.5rem;
+  color: var(--dark);
+}
+
+.empty-state p {
+  color: var(--gray);
+  margin-bottom: 1.5rem;
+}
+
+/* Быстрые действия */
+.quick-actions {
+  background: white;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  margin-top: 2rem;
+  border: 1px solid #e5e7eb;
+  transform: none !important;
+}
+
+.quick-actions h3 {
+  margin-bottom: 1rem;
+  color: var(--dark);
+}
+
+.quick-actions-buttons {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.quick-actions-buttons button {
+  background: var(--light);
+  color: var(--dark);
+  box-shadow: none;
+}
+
+.quick-actions-buttons button:hover {
+  background: var(--primary);
+  color: white;
+}
+
+/* Адаптивность для дашборда */
+@media (max-width: 768px) {
+  .dashboard-header {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .dashboard-tabs {
+    justify-content: center;
+  }
+  
+  .tab-dashboard {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+  }
+  
+  .items-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .transaction-item {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .quick-actions-buttons {
+    justify-content: center;
+  }
+  
+  .order-form, .policy-form {
+    padding: 1.5rem;
+    margin: 0 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-header h2 {
+    font-size: 1.25rem;
+  }
+  
+  .stat-number {
+    font-size: 1.75rem;
+  }
+  
+  .tab-dashboard {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.75rem;
+  }
+  
+  .item-card {
+    padding: 1rem;
+  }
+}
+
 /* Адаптивность */
 @media (max-width: 768px) {
   .nav-container {
