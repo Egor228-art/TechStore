@@ -1,10 +1,12 @@
-import { getCart, addToCart, updateCartItem, clearCart } from "../../lib";
+import { getCart, addToCart, updateCartItem, clearCart, initTables } from "../../lib";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]/route";
 import { NextResponse } from "next/server";
 
 export async function GET() {
   try {
+    await initTables();
+    
     const session = await getServerSession(authOptions);
     if (!session) return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
     
@@ -17,6 +19,8 @@ export async function GET() {
 
 export async function POST(request) {
   try {
+    await initTables();
+    
     const session = await getServerSession(authOptions);
     if (!session) return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
     
@@ -30,6 +34,8 @@ export async function POST(request) {
 
 export async function PUT(request) {
   try {
+    await initTables();
+    
     const session = await getServerSession(authOptions);
     if (!session) return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
     
@@ -43,6 +49,8 @@ export async function PUT(request) {
 
 export async function DELETE(request) {
   try {
+    await initTables();
+    
     const session = await getServerSession(authOptions);
     if (!session) return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
     

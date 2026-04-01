@@ -4,12 +4,30 @@ import bcrypt from 'bcryptjs';
 // Флаг для предотвращения повторной инициализации
 let tablesInitialized = false;
 
+// Получаем строку подключения из переменных
+const connectionString = process.env.POSTGRES_URL_TECH || process.env.POSTGRES_URL;
+
+if (!connectionString) {
+  console.error('❌ Нет строки подключения к базе данных');
+}
+
+// Создаем клиент с явной строкой подключения
+function getSql() {
+  if (connectionString && connectionString !== process.env.POSTGRES_URL) {
+    const { sql: customSql } = require('@vercel/postgres');
+    return customSql(connectionString);
+  }
+  return sql;
+}
+
 // Инициализация таблиц
 export async function initTables() {
   if (tablesInitialized) return;
   
   try {
-    await sql`
+    const db = getSql();
+    
+    await db`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
         email VARCHAR(255) UNIQUE NOT NULL,
@@ -21,7 +39,7 @@ export async function initTables() {
       )
     `;
     
-    await sql`
+    await db`
       CREATE TABLE IF NOT EXISTS products (
         id SERIAL PRIMARY KEY,
         name VARCHAR(200) NOT NULL,
@@ -35,7 +53,7 @@ export async function initTables() {
       )
     `;
     
-    await sql`
+    await db`
       CREATE TABLE IF NOT EXISTS cart_items (
         id SERIAL PRIMARY KEY,
         user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
@@ -45,7 +63,7 @@ export async function initTables() {
       )
     `;
     
-    await sql`
+    await db`
       CREATE TABLE IF NOT EXISTS orders (
         id SERIAL PRIMARY KEY,
         user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
@@ -57,7 +75,7 @@ export async function initTables() {
       )
     `;
     
-    await sql`
+    await db`
       CREATE TABLE IF NOT EXISTS order_items (
         id SERIAL PRIMARY KEY,
         order_id INTEGER REFERENCES orders(id) ON DELETE CASCADE,
@@ -69,9 +87,9 @@ export async function initTables() {
     `;
     
     // Добавляем тестовые товары, если таблица пустая
-    const products = await sql`SELECT * FROM products`;
+    const products = await db`SELECT * FROM products`;
     if (products.rows.length === 0) {
-      await seedProducts();
+      await seedProducts(db);
     }
     
     tablesInitialized = true;
@@ -81,7 +99,7 @@ export async function initTables() {
   }
 }
 
-async function seedProducts() {
+async function seedProducts(db) {
   const testProducts = [
     { name: 'iPhone 15 Pro', description: 'Флагманский смартфон Apple с Titanium корпусом', price: 99990, category: 'phones', image: '📱', stock: 10, rating: 4.8 },
     { name: 'Samsung Galaxy S24', description: 'Мощный Android смартфон с AI функциями', price: 89990, category: 'phones', image: '📱', stock: 15, rating: 4.7 },
@@ -89,23 +107,28 @@ async function seedProducts() {
     { name: 'Sony WH-1000XM5', description: 'Беспроводные наушники с шумоподавлением', price: 29990, category: 'audio', image: '🎧', stock: 20, rating: 4.8 },
     { name: 'iPad Air', description: 'Планшет для творчества и учебы', price: 59990, category: 'tablets', image: '📟', stock: 8, rating: 4.6 },
     { name: 'Apple Watch Series 9', description: 'Умные часы с новыми функциями', price: 39990, category: 'wearables', image: '⌚', stock: 12, rating: 4.7 },
+    { name: 'Xiaomi Redmi Note 13', description: 'Доступный смартфон с отличной камерой', price: 24990, category: 'phones', image: '📱', stock: 25, rating: 4.5 },
+    { name: 'Dell XPS 15', description: 'Мощный ноутбук для работы и творчества', price: 159990, category: 'laptops', image: '💻', stock: 7, rating: 4.7 },
   ];
   
   for (const product of testProducts) {
-    await sql`
+    await db`
       INSERT INTO products (name, description, price, category, image, stock, rating)
       VALUES (${product.name}, ${product.description}, ${product.price}, ${product.category}, ${product.image}, ${product.stock}, ${product.rating})
     `;
   }
 }
 
-// Не вызываем initTables() автоматически, только по запросу
-// initTables();
+// Получаем правильный клиент для запросов
+function getDb() {
+  return getSql();
+}
 
 // Пользователи
 export async function getUserByEmail(email) {
   try {
-    const { rows } = await sql`SELECT * FROM users WHERE email = ${email}`;
+    const db = getDb();
+    const { rows } = await db`SELECT * FROM users WHERE email = ${email}`;
     return rows[0];
   } catch (error) {
     console.error('Ошибка поиска:', error.message);
@@ -116,7 +139,8 @@ export async function getUserByEmail(email) {
 export async function createUser(email, password, name, phone = '') {
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
-    const { rows } = await sql`
+    const db = getDb();
+    const { rows } = await db`
       INSERT INTO users (email, password, name, phone)
       VALUES (${email}, ${hashedPassword}, ${name}, ${phone})
       RETURNING id, email, name
@@ -131,13 +155,14 @@ export async function createUser(email, password, name, phone = '') {
 // Товары
 export async function getAllProducts(category = null) {
   try {
+    const db = getDb();
     if (category && category !== 'all') {
-      const { rows } = await sql`
+      const { rows } = await db`
         SELECT * FROM products WHERE category = ${category} ORDER BY created_at DESC
       `;
       return rows;
     }
-    const { rows } = await sql`SELECT * FROM products ORDER BY created_at DESC`;
+    const { rows } = await db`SELECT * FROM products ORDER BY created_at DESC`;
     return rows;
   } catch (error) {
     console.error('Ошибка получения товаров:', error.message);
@@ -147,7 +172,8 @@ export async function getAllProducts(category = null) {
 
 export async function getProductById(id) {
   try {
-    const { rows } = await sql`SELECT * FROM products WHERE id = ${id}`;
+    const db = getDb();
+    const { rows } = await db`SELECT * FROM products WHERE id = ${id}`;
     return rows[0];
   } catch (error) {
     console.error('Ошибка получения товара:', error.message);
@@ -158,7 +184,8 @@ export async function getProductById(id) {
 // Корзина
 export async function getCart(userId) {
   try {
-    const { rows } = await sql`
+    const db = getDb();
+    const { rows } = await db`
       SELECT ci.*, p.name, p.price, p.image, p.stock
       FROM cart_items ci
       JOIN products p ON ci.product_id = p.id
@@ -173,17 +200,18 @@ export async function getCart(userId) {
 
 export async function addToCart(userId, productId, quantity = 1) {
   try {
-    const existing = await sql`
+    const db = getDb();
+    const existing = await db`
       SELECT * FROM cart_items WHERE user_id = ${userId} AND product_id = ${productId}
     `;
     
     if (existing.rows.length > 0) {
-      await sql`
+      await db`
         UPDATE cart_items SET quantity = quantity + ${quantity}
         WHERE user_id = ${userId} AND product_id = ${productId}
       `;
     } else {
-      await sql`
+      await db`
         INSERT INTO cart_items (user_id, product_id, quantity)
         VALUES (${userId}, ${productId}, ${quantity})
       `;
@@ -197,12 +225,13 @@ export async function addToCart(userId, productId, quantity = 1) {
 
 export async function updateCartItem(userId, productId, quantity) {
   try {
+    const db = getDb();
     if (quantity <= 0) {
-      await sql`
+      await db`
         DELETE FROM cart_items WHERE user_id = ${userId} AND product_id = ${productId}
       `;
     } else {
-      await sql`
+      await db`
         UPDATE cart_items SET quantity = ${quantity}
         WHERE user_id = ${userId} AND product_id = ${productId}
       `;
@@ -216,7 +245,8 @@ export async function updateCartItem(userId, productId, quantity) {
 
 export async function clearCart(userId) {
   try {
-    await sql`DELETE FROM cart_items WHERE user_id = ${userId}`;
+    const db = getDb();
+    await db`DELETE FROM cart_items WHERE user_id = ${userId}`;
     return { success: true };
   } catch (error) {
     console.error('Ошибка очистки корзины:', error.message);
@@ -227,12 +257,13 @@ export async function clearCart(userId) {
 // Заказы
 export async function createOrder(userId, address, phone) {
   try {
+    const db = getDb();
     const cart = await getCart(userId);
     if (cart.length === 0) throw new Error('Корзина пуста');
     
     const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
     
-    const { rows } = await sql`
+    const { rows } = await db`
       INSERT INTO orders (user_id, total, address, phone)
       VALUES (${userId}, ${total}, ${address}, ${phone})
       RETURNING id
@@ -241,13 +272,12 @@ export async function createOrder(userId, address, phone) {
     const orderId = rows[0].id;
     
     for (const item of cart) {
-      await sql`
+      await db`
         INSERT INTO order_items (order_id, product_id, product_name, price, quantity)
         VALUES (${orderId}, ${item.product_id}, ${item.name}, ${item.price}, ${item.quantity})
       `;
       
-      // Уменьшаем остаток товара
-      await sql`
+      await db`
         UPDATE products SET stock = stock - ${item.quantity}
         WHERE id = ${item.product_id}
       `;
@@ -264,7 +294,8 @@ export async function createOrder(userId, address, phone) {
 
 export async function getUserOrders(userId) {
   try {
-    const { rows } = await sql`
+    const db = getDb();
+    const { rows } = await db`
       SELECT * FROM orders WHERE user_id = ${userId} ORDER BY created_at DESC
     `;
     return rows;
